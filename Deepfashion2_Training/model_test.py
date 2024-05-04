@@ -1,5 +1,7 @@
 from keras.preprocessing.image import load_img
 from keras.preprocessing.image import img_to_array
+import sys
+sys.path.append('./source')
 from mrcnn.config import Config
 from mrcnn.model import MaskRCNN
 import matplotlib.pyplot as plt
@@ -20,10 +22,11 @@ class TestConfig(Config):
      NUM_CLASSES = 1 + 13
 
 rcnn = MaskRCNN(mode='inference', model_dir='/home/link/Desktop/final_100', config=TestConfig())
-rcnn.load_weights('mask_rcnn_deepfashion2_0100.h5', by_name=True)
+rcnn.load_weights('C:/Users/rudha/Deepfashion2_Training/Deepfashion2_Training/logs/mask_rcnn_deepfashion2_0001.h5', by_name=True)
 img = skimage.io.imread('Test7.jpg')
 results = rcnn.detect([img], verbose=1)
 r = results[0]
+print("results", results)
 visualize.display_instances(img, r['rois'], r['masks'], r['class_ids'], class_names, r['scores'])
 mask = r['masks']
 mask1 = mask.astype(int)

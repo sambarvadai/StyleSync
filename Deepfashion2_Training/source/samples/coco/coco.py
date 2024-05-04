@@ -236,12 +236,15 @@ class CocoDataset(utils.Dataset):
 
         instance_masks = []
         class_ids = []
+        pair_ids = []
         annotations = self.image_info[image_id]["annotations"]
         # Build mask of shape [height, width, instance_count] and list
         # of class IDs that correspond to each channel of the mask.
         for annotation in annotations:
             class_id = self.map_source_class_id(
                 "coco.{}".format(annotation['category_id']))
+            pair_id = self.map_source_class_id(
+                "coco.{}".format(annotation['pair_id']))
             if class_id:
                 m = self.annToMask(annotation, image_info["height"],
                                    image_info["width"])
@@ -259,12 +262,13 @@ class CocoDataset(utils.Dataset):
                         m = np.ones([image_info["height"], image_info["width"]], dtype=bool)
                 instance_masks.append(m)
                 class_ids.append(class_id)
-
+            if pair_id:
+                pair_ids.append(pair_id)
         # Pack instance masks into an array
         if class_ids:
             mask = np.stack(instance_masks, axis=2).astype(np.bool)
             class_ids = np.array(class_ids, dtype=np.int32)
-            return mask, class_ids
+            return mask, class_ids, pair_ids
         else:
             # Call super class to return an empty mask
             return super(CocoDataset, self).load_mask(image_id)

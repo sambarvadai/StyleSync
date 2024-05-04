@@ -139,6 +139,10 @@ def display_instances(image, boxes, masks, class_ids, class_names,
         if not captions:
             class_id = class_ids[i]
             score = scores[i] if scores is not None else None
+            #pushkar
+            #if class_id not in class_names:
+            #    label = "unknown"
+            #else:
             label = class_names[class_id]
             caption = "{} {:.3f}".format(label, score) if score else label
         else:
@@ -172,7 +176,7 @@ def display_differences(image,
                         pred_box, pred_class_id, pred_score, pred_mask,
                         class_names, title="", ax=None,
                         show_mask=True, show_box=True,
-                        iou_threshold=0.5, score_threshold=0.5):
+                        iou_threshold=0.5, score_threshold=0.7):
     """Display ground truth and prediction instances on the same image."""
     # Match predictions to ground truth
     gt_match, pred_match, overlaps = utils.compute_matches(

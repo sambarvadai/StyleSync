@@ -1208,7 +1208,7 @@ def load_image_gt(dataset, config, image_id, augmentation=None, augment=None,
     """
     # Load image and mask
     image = dataset.load_image(image_id)
-    mask, class_ids = dataset.load_mask(image_id)
+    mask, class_ids,pair_ids = dataset.load_mask(image_id)
     keypoints, class_ids = dataset.load_keypoint(image_id)
     original_shape = image.shape
     image, window, scale, padding, crop = utils.resize_image(
@@ -1254,8 +1254,10 @@ def load_image_gt(dataset, config, image_id, augmentation=None, augment=None,
     # Note that some boxes might be all zeros if the corresponding mask got cropped out.
     # and here is to filter them out
     _idx = np.sum(mask, axis=(0, 1)) > 0
+    #tushar
     mask = mask[:, :, _idx]
     class_ids = class_ids[_idx]
+    pair_ids = pair_ids[_idx]
     # Bounding boxes. Note that some boxes might be all zeros
     # if the corresponding mask got cropped out.
     # bbox: [num_instances, (y1, x1, y2, x2)]
@@ -1276,7 +1278,7 @@ def load_image_gt(dataset, config, image_id, augmentation=None, augment=None,
     image_meta = compose_image_meta(image_id, original_shape, image.shape,
                                     window, scale, active_class_ids)
 
-    return image, image_meta, class_ids, bbox, mask, keypoints
+    return image, image_meta, class_ids, bbox, mask, keypoints, pair_ids
 
 
 def build_detection_targets(rpn_rois, gt_class_ids, gt_boxes, gt_masks, config):
@@ -1666,6 +1668,8 @@ def data_generator(dataset, config, shuffle=True, augment=False, augmentation=No
     b = 0  # batch item index
     image_index = -1
     image_ids = np.copy(dataset.image_ids)
+    #tushar
+    print("1 Imageid ", image_ids)
     error_count = 0
     no_augmentation_sources = no_augmentation_sources or []
 
@@ -1682,7 +1686,9 @@ def data_generator(dataset, config, shuffle=True, augment=False, augmentation=No
     while True:
         try:
             # Increment index to pick next image. Shuffle if at the start of an epoch.
+            print("1 imageindex before" , image_index)
             image_index = (image_index + 1) % len(image_ids)
+            print("1 imageindex after" , image_index)
             if shuffle and image_index == 0:
                 np.random.shuffle(image_ids)
 

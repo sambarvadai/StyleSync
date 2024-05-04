@@ -1209,7 +1209,7 @@ def load_image_gt(dataset, config, image_id, augment=False, augmentation=None,
     """
     # Load image and mask
     image = dataset.load_image(image_id)
-    mask, class_ids = dataset.load_mask(image_id)
+    mask, class_ids, pair_ids = dataset.load_mask(image_id)
     original_shape = image.shape
     image, window, scale, padding, crop = utils.resize_image(
         image,
@@ -1261,8 +1261,10 @@ def load_image_gt(dataset, config, image_id, augment=False, augmentation=None,
     # Note that some boxes might be all zeros if the corresponding mask got cropped out.
     # and here is to filter them out
     _idx = np.sum(mask, axis=(0, 1)) > 0
+    #tushar
     mask = mask[:, :, _idx]
     class_ids = class_ids[_idx]
+    pair_ids = pair_ids[_idx]
     # Bounding boxes. Note that some boxes might be all zeros
     # if the corresponding mask got cropped out.
     # bbox: [num_instances, (y1, x1, y2, x2)]
@@ -1283,7 +1285,7 @@ def load_image_gt(dataset, config, image_id, augment=False, augmentation=None,
     image_meta = compose_image_meta(image_id, original_shape, image.shape,
                                     window, scale, active_class_ids)
 
-    return image, image_meta, class_ids, bbox, mask
+    return image, image_meta, class_ids, bbox, mask, pair_ids
 
 
 def build_detection_targets(rpn_rois, gt_class_ids, gt_boxes, gt_masks, config):
@@ -1673,6 +1675,8 @@ def data_generator(dataset, config, shuffle=True, augment=False, augmentation=No
     b = 0  # batch item index
     image_index = -1
     image_ids = np.copy(dataset.image_ids)
+    #tushar
+    print("2 Imageid ", image_ids)
     error_count = 0
     no_augmentation_sources = no_augmentation_sources or []
 
@@ -1689,7 +1693,9 @@ def data_generator(dataset, config, shuffle=True, augment=False, augmentation=No
     while True:
         try:
             # Increment index to pick next image. Shuffle if at the start of an epoch.
+            print("2 imageindex before" , image_index)
             image_index = (image_index + 1) % len(image_ids)
+            print("2 imageindex after" , image_index)
             if shuffle and image_index == 0:
                 np.random.shuffle(image_ids)
 
@@ -1698,12 +1704,12 @@ def data_generator(dataset, config, shuffle=True, augment=False, augmentation=No
 
             # If the image source is not to be augmented pass None as augmentation
             if dataset.image_info[image_id]['source'] in no_augmentation_sources:
-                image, image_meta, gt_class_ids, gt_boxes, gt_masks = \
+                image, image_meta, gt_class_ids, gt_boxes, gt_masks, gt_pair_ids = \
                 load_image_gt(dataset, config, image_id, augment=augment,
                               augmentation=None,
                               use_mini_mask=config.USE_MINI_MASK)
             else:
-                image, image_meta, gt_class_ids, gt_boxes, gt_masks = \
+                image, image_meta, gt_class_ids, gt_boxes, gt_masks, gt_pair_ids = \
                     load_image_gt(dataset, config, image_id, augment=augment,
                                 augmentation=augmentation,
                                 use_mini_mask=config.USE_MINI_MASK)
@@ -2411,6 +2417,7 @@ class MaskRCNN():
         # Pack into arrays
         molded_images = np.stack(molded_images)
         image_metas = np.stack(image_metas)
+        print("image_metas", image_metas)
         windows = np.stack(windows)
         return molded_images, image_metas, windows
 
